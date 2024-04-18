@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <h1>Sign Up</h1>
+    <form action="/signUp" method="post">
+      <input
+        type="text"
+        name="username"
+        id=""
+        placeholder="Enter your login..."
+      />
+      <input
+        type="text"
+        name="password"
+        id=""
+        placeholder="Enter your password..."
+      />
+      <button type="submit">Register</button>
+    </form>
+
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="{{ url_for('static', filename='../static/css/main.css') }}"
+    />
+  </body>
+</html>

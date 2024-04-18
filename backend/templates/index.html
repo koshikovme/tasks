@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+
+    <link href="https://fonts.cdnfonts.com/css/sf-pro-display" rel="stylesheet">
+  </head>
+  <body>
+    {% if session['username'] %}
+    <h1>Hello, {{ session['username'] }}!</h1>
+    <p id="userId">User ID: {{ session['id'][0] }}</p>
+
+      <label for="sort_by">Sort by:</label>
+      <select id="sort_by" name="sort_by" onchange="sortBy()">
+        <option value="" {% if not sort_by %}selected{% endif %}>Sort By(Default)</option>
+        <option value="id" {% if sort_by == 'id' %}selected{% endif %}>ID</option>
+        <option value="header" {% if sort_by == 'header' %}selected{% endif %}>Task Name</option>
+        <option value="priority" {% if sort_by == 'priority' %}selected{% endif %}>Priority</option>
+      </select>
+      
+
+
+    <h1>Task List</h1>
+
+    <table id="tasks">
+      <thead>
+        <tr>
+          <th>Status</th>
+          <th>ID</th>
+          <th>Task</th>
+          <th>Details</th>
+          <th>Priority</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for task in tasks %}
+        <tr id="{{ task[0] }}">
+          <td>
+            <input type="checkbox" {% if task[4] %}checked{% endif %} onchange="updateIsDone('{{ task[0] }}', this.checked)" />
+          </td>
+          <td>{{ task[0] }}</td>
+          <td>{{ task[1] }}</td>
+          <td>{{ task[2] }}</td>
+          <td>
+            <select onchange="updatePriority('{{ task[0] }}', this.value)">
+              <option value="NORMAL" {% if task[3] == 'NORMAL' %}selected{% endif %}>NORMAL</option>
+              <option value="HIGH" {% if task[3] == 'HIGH' %}selected{% endif %}>HIGH</option>
+              <option value="LOW" {% if task[3] == 'LOW' %}selected{% endif %}>LOW</option>
+            </select>
+          </td>
+          <td>
+            <button onclick="removeTask('{{ task[0] }}')">Remove</button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <button id="add-task-btn">Add Task</button>
+
+
+    <form id="add-task-form" onsubmit="addTask(); return false;" style="display: none;">
+      <input type="text" name="header" id="header" placeholder="Enter header...">
+      <input type="text" name="details" id="details" placeholder="Enter details...">
+    
+      <select id="priority">
+        <option value="NORMAL">NORMAL</option>
+        <option value="HIGH">HIGH</option>
+        <option value="LOW">LOW</option>
+      </select>
+    
+      <button type="submit">Add</button>
+    </form>
+    
+    
+
+    <button onclick="window.location.href='/logout'">Logout</button>
+
+    {% else %}
+    <h1>You are not logged in</h1>
+    <a href="/login">Please login</a>
+    {% endif %}
+
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="{{ url_for('static', filename='../static/css/main.css') }}"
+    />
+
+    <script>
+      const formBtn = document.getElementById("add-task-btn");
+
+      formBtn.onclick = () => {
+        const myForm = document.getElementById("add-task-form");
+
+        if (myForm.style.display === "none") {
+          myForm.style.display = "block";
+        } else {
+          myForm.style.display = "none";
+        }
+      };
+
+      async function addTask() {
+        const header = document.getElementById("header").value;
+        const details = document.getElementById("details").value;
+        const priority = document.getElementById("priority").value;
+        const userIdText = document.getElementById('userId').innerText;
+        const userId = Number(userIdText.split(':')[1].trim()); 
+        
+        alert("userId: " + userId); 
+        
+        try {
+          const response = await fetch("/create-task", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ header: header, details: details, priority: priority, userId: userId })
+          });
+          console.log("Task added successfully.");
+
+          location.reload()
+        } catch (error) {
+          console.error("Error adding task:", error);
+        }
+      }
+      
+
+
+
+      async function updatePriority(taskId, newPriority) {
+        try {
+            const response = await fetch("/update-priority", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ taskId: taskId, newPriority })
+            });
+            console.log("Updating priority for task ID:", taskId);
+        } catch (error) {
+            console.error("Error updating priority:", error);
+        }
+    }
+
+    async function removeTask(taskId) {
+      try {
+          const response = await fetch("/remove-task", {
+              method: "POST",
+              headers: {
+                  "Content-Type": "application/json"
+              },
+              body: JSON.stringify({ taskId: taskId })
+          });
+          console.log("Task removed successfully. Task ID:", taskId);
+  
+          const el = document.getElementById(taskId);
+          if (el) {
+              el.remove();
+          } else {
+              console.error("Task element not found. Task ID:", taskId);
+          }
+      } catch (error) {
+          console.error("Error removing task:", error);
+      }
+  }
+  
+
+  async function updateIsDone(taskId, isChecked) {
+    try {
+        const response = await fetch("/update-is-done", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ taskId: taskId, isDone: isChecked ? 1 : 0 })
+        });
+        console.log("Updating isDone for task ID:", taskId);
+
+        
+    } catch (error) {
+        console.error("Error updating isDone:", error);
+    }
+}
+
+function sortBy() {
+  const sortCriteria = document.getElementById("sort_by").value;
+  window.location.href = `/sort-by?sort_by=${sortCriteria}`;
+}
+
+
+  
+    </script>
+  </body>
+</html>
